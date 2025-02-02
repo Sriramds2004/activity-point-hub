@@ -5,50 +5,88 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ClubLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [clubName, setClubName] = useState("");
+  const [department, setDepartment] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const departments = [
+    "Computer Science",
+    "Information Science",
+    "Electronics",
+    "Mechanical",
+    "Civil",
+    "Other"
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       if (isSignUp) {
-        // Sign up new club
+        console.log("Starting club registration process...");
+        
+        // Validate inputs
+        if (!email.endsWith("@gmail.com")) {
+          throw new Error("Please use a valid Gmail address");
+        }
+
+        if (password.length < 6) {
+          throw new Error("Password must be at least 6 characters long");
+        }
+
+        if (!department) {
+          throw new Error("Please select a department");
+        }
+
+        // Sign up new club coordinator
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              role: 'club_coordinator',
+              department: department
+            }
+          }
         });
 
         if (signUpError) throw signUpError;
 
         if (authData.user) {
+          console.log("Club coordinator account created, creating club record...");
+          
           // Create club record
           const { error: clubError } = await supabase
             .from('clubs')
             .insert([
               {
                 faculty_coordinator_id: authData.user.id,
-                club_head_usn: null, // This can be set later
+                club_head_usn: null,
                 no_of_activity: 0
               }
             ]);
 
           if (clubError) throw clubError;
 
+          console.log("Club registration successful!");
+          
           toast({
             title: "Success!",
             description: "Your club account has been created. Please check your email for verification.",
           });
         }
       } else {
-        // Sign in existing club
+        console.log("Attempting club coordinator login...");
+        
+        // Sign in existing club coordinator
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -56,6 +94,8 @@ const ClubLogin = () => {
 
         if (signInError) throw signInError;
 
+        console.log("Login successful!");
+        
         toast({
           title: "Welcome back!",
           description: "Successfully logged in to your club account.",
@@ -109,17 +149,37 @@ const ClubLogin = () => {
               />
             </div>
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="clubName">Club Name</Label>
-                <Input
-                  id="clubName"
-                  type="text"
-                  placeholder="Enter club name"
-                  value={clubName}
-                  onChange={(e) => setClubName(e.target.value)}
-                  required
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="clubName">Club Name</Label>
+                  <Input
+                    id="clubName"
+                    type="text"
+                    placeholder="Enter club name"
+                    value={clubName}
+                    onChange={(e) => setClubName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Select
+                    value={department}
+                    onValueChange={setDepartment}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept} value={dept}>
+                          {dept}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
             <Button type="submit" className="w-full">
               {isSignUp ? "Sign Up" : "Login"}
