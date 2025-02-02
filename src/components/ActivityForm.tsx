@@ -23,26 +23,42 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
   const onSubmit = async (data: ActivityFormData) => {
     try {
       setIsLoading(true);
-      console.log("Submitting activity:", data);
+      console.log("Starting activity submission:", data);
 
       // Get the current user's club information
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error("Auth error:", userError);
+        throw new Error("Authentication error");
+      }
+      
       if (!userData.user) {
+        console.error("No user found");
         throw new Error("Not authenticated");
       }
 
+      console.log("Fetching club data for user:", userData.user.id);
       const { data: clubData, error: clubError } = await supabase
         .from("clubs")
         .select("club_id")
         .eq("faculty_coordinator_id", userData.user.id)
-        .single();
+        .maybeSingle();
 
-      if (clubError || !clubData) {
-        throw new Error("Club not found");
+      if (clubError) {
+        console.error("Club fetch error:", clubError);
+        throw clubError;
       }
+
+      if (!clubData) {
+        console.error("No club found for this coordinator");
+        throw new Error("No club found for this coordinator. Please set up your club first.");
+      }
+
+      console.log("Club found:", clubData);
 
       let document_url = null;
       if (data.document) {
+        console.log("Uploading document:", data.document.name);
         const fileExt = data.document.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const { error: uploadError, data: uploadData } = await supabase.storage
@@ -50,6 +66,7 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
           .upload(fileName, data.document);
 
         if (uploadError) {
+          console.error("Document upload error:", uploadError);
           throw uploadError;
         }
 
@@ -58,8 +75,18 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
             .from('activity_documents')
             .getPublicUrl(fileName);
           document_url = publicUrl;
+          console.log("Document uploaded successfully:", document_url);
         }
       }
+
+      console.log("Inserting activity with data:", {
+        activity_name: data.activity_name,
+        date: data.date,
+        points: data.points,
+        deadline: data.deadline,
+        club_id: clubData.club_id,
+        document_url
+      });
 
       const { error: insertError } = await supabase
         .from("activities")
@@ -72,8 +99,12 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
           document_url
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Activity insert error:", insertError);
+        throw insertError;
+      }
 
+      console.log("Activity added successfully");
       toast({
         title: "Success",
         description: "Activity added successfully",
@@ -82,10 +113,10 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
       form.reset();
       onSuccess();
     } catch (error) {
-      console.error("Error adding activity:", error);
+      console.error("Error in activity submission:", error);
       toast({
         title: "Error",
-        description: "Failed to add activity. Please try again.",
+        description: error.message || "Failed to add activity. Please try again.",
         variant: "destructive",
       });
     } finally {
