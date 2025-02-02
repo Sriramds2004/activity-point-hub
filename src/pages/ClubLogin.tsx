@@ -14,6 +14,8 @@ const ClubLogin = () => {
   const [password, setPassword] = useState("");
   const [clubName, setClubName] = useState("");
   const [department, setDepartment] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -46,6 +48,10 @@ const ClubLogin = () => {
           throw new Error("Please select a department");
         }
 
+        if (!firstName || !lastName) {
+          throw new Error("Please enter your full name");
+        }
+
         // Sign up new club coordinator
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -61,15 +67,32 @@ const ClubLogin = () => {
         if (signUpError) throw signUpError;
 
         if (authData.user) {
-          console.log("Club coordinator account created, creating club record...");
+          console.log("Club coordinator account created, creating teacher record...");
           
-          // Create club record
+          // First create the teacher record
+          const { data: teacherData, error: teacherError } = await supabase
+            .from('teachers')
+            .insert([
+              {
+                email,
+                dept: department,
+                first_name: firstName,
+                last_name: lastName
+              }
+            ])
+            .select()
+            .single();
+
+          if (teacherError) throw teacherError;
+
+          console.log("Teacher record created, creating club record...");
+          
+          // Then create club record with the teacher's ID
           const { error: clubError } = await supabase
             .from('clubs')
             .insert([
               {
-                faculty_coordinator_id: authData.user.id,
-                club_head_usn: null,
+                faculty_coordinator_id: teacherData.teacher_id,
                 no_of_activity: 0
               }
             ]);
@@ -150,6 +173,28 @@ const ClubLogin = () => {
             </div>
             {isSignUp && (
               <>
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="Enter your first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Enter your last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="clubName">Club Name</Label>
                   <Input
