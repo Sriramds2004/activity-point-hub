@@ -17,7 +17,9 @@ export type Database = {
           club_id: string | null
           created_at: string | null
           date: string
+          deadline: string | null
           document_url: string | null
+          points: number | null
         }
         Insert: {
           activity_id?: string
@@ -26,7 +28,9 @@ export type Database = {
           club_id?: string | null
           created_at?: string | null
           date: string
+          deadline?: string | null
           document_url?: string | null
+          points?: number | null
         }
         Update: {
           activity_id?: string
@@ -35,7 +39,9 @@ export type Database = {
           club_id?: string | null
           created_at?: string | null
           date?: string
+          deadline?: string | null
           document_url?: string | null
+          points?: number | null
         }
         Relationships: [
           {
