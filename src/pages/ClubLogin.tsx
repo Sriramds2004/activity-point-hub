@@ -12,7 +12,6 @@ const ClubLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [clubName, setClubName] = useState("");
   const [department, setDepartment] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -33,7 +32,7 @@ const ClubLogin = () => {
     
     try {
       if (isSignUp) {
-        console.log("Starting club registration process...");
+        console.log("Starting coordinator registration process...");
         
         // Validate inputs
         if (!email.endsWith("@gmail.com")) {
@@ -52,7 +51,7 @@ const ClubLogin = () => {
           throw new Error("Please enter your full name");
         }
 
-        // Sign up new club coordinator
+        // Sign up new coordinator
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -67,10 +66,10 @@ const ClubLogin = () => {
         if (signUpError) throw signUpError;
 
         if (authData.user) {
-          console.log("Club coordinator account created, creating teacher record...");
+          console.log("Coordinator account created, creating teacher record...");
           
-          // First create the teacher record
-          const { data: teacherData, error: teacherError } = await supabase
+          // Create the teacher record
+          const { error: teacherError } = await supabase
             .from('teachers')
             .insert([
               {
@@ -79,37 +78,21 @@ const ClubLogin = () => {
                 first_name: firstName,
                 last_name: lastName
               }
-            ])
-            .select()
-            .single();
+            ]);
 
           if (teacherError) throw teacherError;
 
-          console.log("Teacher record created, creating club record...");
-          
-          // Then create club record with the teacher's ID
-          const { error: clubError } = await supabase
-            .from('clubs')
-            .insert([
-              {
-                faculty_coordinator_id: teacherData.teacher_id,
-                no_of_activity: 0
-              }
-            ]);
-
-          if (clubError) throw clubError;
-
-          console.log("Club registration successful!");
+          console.log("Registration successful!");
           
           toast({
             title: "Success!",
-            description: "Your club account has been created. Please check your email for verification.",
+            description: "Your account has been created. Please check your email for verification.",
           });
         }
       } else {
-        console.log("Attempting club coordinator login...");
+        console.log("Attempting coordinator login...");
         
-        // Sign in existing club coordinator
+        // Sign in existing coordinator
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -121,7 +104,7 @@ const ClubLogin = () => {
         
         toast({
           title: "Welcome back!",
-          description: "Successfully logged in to your club account.",
+          description: "Successfully logged in.",
         });
         
         navigate("/club-dashboard");
@@ -140,10 +123,10 @@ const ClubLogin = () => {
     <div className="flex justify-center items-center min-h-[80vh]">
       <Card className="w-[400px]">
         <CardHeader>
-          <CardTitle>{isSignUp ? "Create Club Account" : "Club Login"}</CardTitle>
+          <CardTitle>{isSignUp ? "Create Coordinator Account" : "Coordinator Login"}</CardTitle>
           <CardDescription>
             {isSignUp 
-              ? "Create a new account for your club" 
+              ? "Create a new coordinator account" 
               : "Enter your credentials to access your dashboard"}
           </CardDescription>
         </CardHeader>
@@ -192,17 +175,6 @@ const ClubLogin = () => {
                     placeholder="Enter your last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clubName">Club Name</Label>
-                  <Input
-                    id="clubName"
-                    type="text"
-                    placeholder="Enter club name"
-                    value={clubName}
-                    onChange={(e) => setClubName(e.target.value)}
                     required
                   />
                 </div>
