@@ -22,7 +22,11 @@ interface Activity {
   approved_status: boolean;
 }
 
-export function ActivitiesList() {
+interface ActivitiesListProps {
+  userRole: "student" | "counselor";
+}
+
+export function ActivitiesList({ userRole }: ActivitiesListProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +64,6 @@ export function ActivitiesList() {
   useEffect(() => {
     fetchActivities();
 
-    // Set up real-time subscription
     const channel = supabase
       .channel("activities-changes")
       .on(
@@ -95,6 +98,31 @@ export function ActivitiesList() {
     }
   };
 
+  const handleApprove = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from("activities")
+        .update({ approved_status: true })
+        .eq("activity_id", activityId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Activity approved successfully",
+      });
+
+      fetchActivities();
+    } catch (error) {
+      console.error("Approval error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve activity",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return <div>Loading activities...</div>;
   }
@@ -114,12 +142,13 @@ export function ActivitiesList() {
             <TableHead>Deadline</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Document</TableHead>
+            {userRole === "counselor" && <TableHead>Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {activities.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center">
+              <TableCell colSpan={userRole === "counselor" ? 7 : 6} className="text-center">
                 No activities found
               </TableCell>
             </TableRow>
@@ -144,6 +173,18 @@ export function ActivitiesList() {
                     </Button>
                   )}
                 </TableCell>
+                {userRole === "counselor" && (
+                  <TableCell>
+                    {!activity.approved_status && (
+                      <Button
+                        variant="outline"
+                        onClick={() => handleApprove(activity.activity_id)}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}

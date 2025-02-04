@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActivitiesList } from "@/components/ActivitiesList";
 
 const StudentDashboard = () => {
   return (
@@ -6,11 +7,10 @@ const StudentDashboard = () => {
       <h1 className="text-3xl font-bold">Student Dashboard</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Activity Points Summary</CardTitle>
+          <CardTitle>Available Activities</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Total Points: 0</p>
-          {/* TODO: Add activity points summary */}
+          <ActivitiesList userRole="student" />
         </CardContent>
       </Card>
     </div>

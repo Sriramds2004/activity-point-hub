@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActivitiesList } from "@/components/ActivitiesList";
 
 const CounselorDashboard = () => {
   return (
@@ -6,11 +7,10 @@ const CounselorDashboard = () => {
       <h1 className="text-3xl font-bold">Counselor Dashboard</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Students Overview</CardTitle>
+          <CardTitle>Activities to Approve</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>No students assigned yet</p>
-          {/* TODO: Add students list and verification requests */}
+          <ActivitiesList userRole="counselor" />
         </CardContent>
       </Card>
     </div>
