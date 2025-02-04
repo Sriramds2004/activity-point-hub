@@ -26,17 +26,9 @@ const CounselorLogin = () => {
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: {
-              role: 'teacher' // Add role to auth metadata
-            }
-          }
         });
 
-        if (signUpError) {
-          console.error('Signup error:', signUpError);
-          throw signUpError;
-        }
+        if (signUpError) throw signUpError;
 
         if (authData.user) {
           // Create teacher record
@@ -52,10 +44,7 @@ const CounselorLogin = () => {
               }
             ]);
 
-          if (teacherError) {
-            console.error('Teacher creation error:', teacherError);
-            throw teacherError;
-          }
+          if (teacherError) throw teacherError;
 
           toast({
             title: "Success!",
@@ -64,26 +53,12 @@ const CounselorLogin = () => {
         }
       } else {
         // Sign in existing counselor
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (signInError) {
-          console.error('Login error:', signInError);
-          throw signInError;
-        }
-
-        // Verify the user is a teacher
-        const { data: teacherData, error: teacherError } = await supabase
-          .from('teachers')
-          .select('*')
-          .eq('email', email)
-          .single();
-
-        if (teacherError || !teacherData) {
-          throw new Error('Account not found or unauthorized');
-        }
+        if (signInError) throw signInError;
 
         toast({
           title: "Welcome back!",
@@ -96,7 +71,7 @@ const CounselorLogin = () => {
       console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication",
+        description: error.message,
         variant: "destructive",
       });
     }
