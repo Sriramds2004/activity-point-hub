@@ -42,23 +42,21 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
         const user = await supabase.auth.getUser();
         const teacherId = user.data.user?.id;
         
-        // First get the assigned student USNs
-        const { data: counselingData } = await supabase
-          .from('student_counseling')
-          .select('student_usn')
-          .eq('teacher_id', teacherId);
-          
-        const studentUsns = counselingData?.map(record => record.student_usn) || [];
-        
-        // Then filter activities by these USNs
-        query = query.in('student_usn', studentUsns);
+        // Only fetch activities from assigned students
+        query = query.in(
+          'student_usn',
+          supabase
+            .from('student_counseling')
+            .select('student_usn')
+            .eq('teacher_id', teacherId)
+        );
       }
       
-      const { data, error: fetchError } = await query.order("date", { ascending: false });
+      const { data, error } = await query.order("date", { ascending: false });
 
-      if (fetchError) {
-        console.error("Activities fetch error:", fetchError);
-        throw fetchError;
+      if (error) {
+        console.error("Activities fetch error:", error);
+        throw error;
       }
 
       console.log("Activities fetched:", data);

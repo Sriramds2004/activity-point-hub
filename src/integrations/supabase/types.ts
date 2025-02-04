@@ -56,51 +56,14 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
-          }
-        ]
-      }
-      students: {
-        Row: {
-          usn: string
-          first_name: string
-          last_name: string
-          dept: string
-          email: string
-          dob: string
-          year: number
-          college_id: string | null
-          created_at: string | null
-        }
-        Insert: {
-          usn: string
-          first_name: string
-          last_name: string
-          dept: string
-          email: string
-          dob: string
-          year: number
-          college_id?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          usn?: string
-          first_name?: string
-          last_name?: string
-          dept?: string
-          email?: string
-          dob?: string
-          year?: number
-          college_id?: string | null
-          created_at?: string | null
-        }
-        Relationships: [
+          },
           {
-            foreignKeyName: "students_college_id_fkey"
-            columns: ["college_id"]
+            foreignKeyName: "activities_student_usn_fkey"
+            columns: ["student_usn"]
             isOneToOne: false
-            referencedRelation: "colleges"
-            referencedColumns: ["college_id"]
-          }
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
         ]
       }
       clubs: {
@@ -126,6 +89,13 @@ export type Database = {
           no_of_activity?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "clubs_club_head_usn_fkey"
+            columns: ["club_head_usn"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
           {
             foreignKeyName: "clubs_faculty_coordinator_id_fkey"
             columns: ["faculty_coordinator_id"]
@@ -218,6 +188,13 @@ export type Database = {
             referencedRelation: "activities"
             referencedColumns: ["activity_id"]
           },
+          {
+            foreignKeyName: "participations_student_usn_fkey"
+            columns: ["student_usn"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
         ]
       }
       student_counseling: {
@@ -241,11 +218,62 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "student_counseling_student_usn_fkey"
+            columns: ["student_usn"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
+          {
             foreignKeyName: "student_counseling_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          college_id: string | null
+          created_at: string | null
+          dept: string
+          dob: string
+          email: string
+          first_name: string
+          last_name: string
+          usn: string
+          year: number
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string | null
+          dept: string
+          dob: string
+          email: string
+          first_name: string
+          last_name: string
+          usn: string
+          year: number
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string | null
+          dept?: string
+          dob?: string
+          email?: string
+          first_name?: string
+          last_name?: string
+          usn?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["college_id"]
           },
         ]
       }
