@@ -56,7 +56,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
-          },
+          }
+        ]
+      }
+      students: {
+        Row: {
+          usn: string
+          first_name: string
+          last_name: string
+          dept: string
+          email: string
+          dob: string
+          year: number
+          college_id: string | null
+          created_at: string | null
+        }
+        Insert: {
+          usn: string
+          first_name: string
+          last_name: string
+          dept: string
+          email: string
+          dob: string
+          year: number
+          college_id?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          usn?: string
+          first_name?: string
+          last_name?: string
+          dept?: string
+          email?: string
+          dob?: string
+          year?: number
+          college_id?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["college_id"]
+          }
         ]
       }
       clubs: {
