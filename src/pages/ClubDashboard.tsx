@@ -34,7 +34,7 @@ const ClubDashboard = () => {
           <CardTitle>Activities Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivitiesList />
+          <ActivitiesList userRole="counselor" />
         </CardContent>
       </Card>
     </div>
