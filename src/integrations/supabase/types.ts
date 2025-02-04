@@ -289,15 +289,7 @@ export type Database = {
       }
     }
     Views: {
-      student_total_points: {
-        Row: {
-          first_name: string | null
-          last_name: string | null
-          total_points: number | null
-          usn: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
