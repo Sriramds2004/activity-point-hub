@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface Activity {
   activity_id: string;
@@ -30,41 +31,9 @@ export function ActivitiesList() {
   const fetchActivities = async () => {
     try {
       console.log("Fetching activities...");
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error("Auth error:", userError);
-        throw userError;
-      }
-
-      if (!userData.user) {
-        console.error("No user found");
-        throw new Error("Not authenticated");
-      }
-
-      console.log("Fetching club data for user:", userData.user.id);
-      const { data: clubData, error: clubError } = await supabase
-        .from("clubs")
-        .select("club_id")
-        .eq("faculty_coordinator_id", userData.user.id)
-        .maybeSingle();
-
-      if (clubError) {
-        console.error("Club fetch error:", clubError);
-        throw clubError;
-      }
-
-      if (!clubData) {
-        console.log("No club found for this coordinator");
-        setError("No club found. Please set up your club first.");
-        setActivities([]);
-        return;
-      }
-
-      console.log("Club found:", clubData);
       const { data, error } = await supabase
         .from("activities")
         .select("*")
-        .eq("club_id", clubData.club_id)
         .order("date", { ascending: false });
 
       if (error) {
@@ -113,6 +82,19 @@ export function ActivitiesList() {
     };
   }, []);
 
+  const handleDownload = async (url: string) => {
+    try {
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download document",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return <div>Loading activities...</div>;
   }
@@ -153,14 +135,13 @@ export function ActivitiesList() {
                 </TableCell>
                 <TableCell>
                   {activity.document_url && (
-                    <a
-                      href={activity.document_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Button
+                      variant="link"
+                      onClick={() => handleDownload(activity.document_url!)}
                       className="text-blue-600 hover:underline"
                     >
-                      View
-                    </a>
+                      Download
+                    </Button>
                   )}
                 </TableCell>
               </TableRow>

@@ -43,15 +43,7 @@ export type Database = {
           document_url?: string | null
           points?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "activities_club_id_fkey"
-            columns: ["club_id"]
-            isOneToOne: false
-            referencedRelation: "clubs"
-            referencedColumns: ["club_id"]
-          },
-        ]
+        Relationships: []
       }
       clubs: {
         Row: {

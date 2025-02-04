@@ -25,37 +25,6 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
       setIsLoading(true);
       console.log("Starting activity submission:", data);
 
-      // Get the current user's club information
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error("Auth error:", userError);
-        throw new Error("Authentication error");
-      }
-      
-      if (!userData.user) {
-        console.error("No user found");
-        throw new Error("Not authenticated");
-      }
-
-      console.log("Fetching club data for user:", userData.user.id);
-      const { data: clubData, error: clubError } = await supabase
-        .from("clubs")
-        .select("club_id")
-        .eq("faculty_coordinator_id", userData.user.id)
-        .maybeSingle();
-
-      if (clubError) {
-        console.error("Club fetch error:", clubError);
-        throw clubError;
-      }
-
-      if (!clubData) {
-        console.error("No club found for this coordinator");
-        throw new Error("No club found for this coordinator. Please set up your club first.");
-      }
-
-      console.log("Club found:", clubData);
-
       let document_url = null;
       if (data.document) {
         console.log("Uploading document:", data.document.name);
@@ -84,7 +53,6 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
         date: data.date,
         points: data.points,
         deadline: data.deadline,
-        club_id: clubData.club_id,
         document_url
       });
 
@@ -95,7 +63,6 @@ export function ActivityForm({ onSuccess }: { onSuccess: () => void }) {
           date: data.date,
           points: data.points,
           deadline: data.deadline,
-          club_id: clubData.club_id,
           document_url
         });
 
