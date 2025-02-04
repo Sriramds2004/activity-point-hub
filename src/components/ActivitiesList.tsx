@@ -20,6 +20,7 @@ interface Activity {
   deadline: string;
   document_url: string | null;
   approved_status: boolean;
+  student_usn: string | null;
 }
 
 interface ActivitiesListProps {
@@ -35,10 +36,23 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
   const fetchActivities = async () => {
     try {
       console.log("Fetching activities...");
-      const { data, error } = await supabase
-        .from("activities")
-        .select("*")
-        .order("date", { ascending: false });
+      let query = supabase.from("activities").select("*");
+      
+      if (userRole === "counselor") {
+        const user = await supabase.auth.getUser();
+        const teacherId = user.data.user?.id;
+        
+        // Only fetch activities from assigned students
+        query = query.in(
+          'student_usn',
+          supabase
+            .from('student_counseling')
+            .select('student_usn')
+            .eq('teacher_id', teacherId)
+        );
+      }
+      
+      const { data, error } = await query.order("date", { ascending: false });
 
       if (error) {
         console.error("Activities fetch error:", error);
@@ -83,7 +97,7 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [userRole]);
 
   const handleDownload = async (url: string) => {
     try {
@@ -100,9 +114,13 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
 
   const handleApprove = async (activityId: string) => {
     try {
+      const user = await supabase.auth.getUser();
       const { error } = await supabase
         .from("activities")
-        .update({ approved_status: true })
+        .update({ 
+          approved_status: true,
+          approved_by_teacher_id: user.data.user?.id
+        })
         .eq("activity_id", activityId);
 
       if (error) throw error;
