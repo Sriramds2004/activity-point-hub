@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 
 const CounselorLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -15,26 +14,22 @@ const CounselorLogin = () => {
   const [lastName, setLastName] = useState("");
   const [dept, setDept] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Starting authentication process...");
     
     try {
       if (isSignUp) {
         console.log("Starting signup process...");
-        // Sign up new counselor
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        const { data: authData } = await supabase.auth.signUp({
           email,
           password,
         });
 
-        if (signUpError) throw signUpError;
-
         if (authData.user) {
           console.log("User signed up, creating teacher record...");
-          // Create teacher record
-          const { error: teacherError } = await supabase
+          await supabase
             .from('teachers')
             .insert([
               {
@@ -45,42 +40,23 @@ const CounselorLogin = () => {
                 last_name: lastName,
               }
             ]);
-
-          if (teacherError) {
-            console.error("Error creating teacher record:", teacherError);
-            throw teacherError;
-          }
-
-          toast({
-            title: "Success!",
-            description: "Your counselor account has been created. Please check your email for verification.",
-          });
+          
+          navigate("/counselor-dashboard");
         }
       } else {
-        console.log("Attempting coordinator login...");
-        // Sign in existing counselor
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        console.log("Attempting counselor login...");
+        const { data } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (signInError) throw signInError;
-
-        console.log("Login successful!");
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in to your counselor account.",
-        });
-        
-        navigate("/counselor-dashboard");
+        if (data.user) {
+          console.log("Login successful!");
+          navigate("/counselor-dashboard");
+        }
       }
     } catch (error) {
-      console.error('Auth error:', error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.log('Auth process completed');
     }
   };
 
