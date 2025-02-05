@@ -57,6 +57,13 @@ export type Database = {
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
+          {
+            foreignKeyName: "activities_student_usn_fkey"
+            columns: ["student_usn"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
         ]
       }
       clubs: {
@@ -82,6 +89,13 @@ export type Database = {
           no_of_activity?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "clubs_club_head_usn_fkey"
+            columns: ["club_head_usn"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
           {
             foreignKeyName: "clubs_faculty_coordinator_id_fkey"
             columns: ["faculty_coordinator_id"]
@@ -174,6 +188,13 @@ export type Database = {
             referencedRelation: "activities"
             referencedColumns: ["activity_id"]
           },
+          {
+            foreignKeyName: "participations_student_usn_fkey"
+            columns: ["student_usn"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
         ]
       }
       student_counseling: {
@@ -196,6 +217,13 @@ export type Database = {
           teacher_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "student_counseling_student_usn_fkey"
+            columns: ["student_usn"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["usn"]
+          },
           {
             foreignKeyName: "student_counseling_teacher_id_fkey"
             columns: ["teacher_id"]
@@ -289,15 +317,7 @@ export type Database = {
       }
     }
     Views: {
-      student_total_points: {
-        Row: {
-          first_name: string | null
-          last_name: string | null
-          total_points: number | null
-          usn: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
