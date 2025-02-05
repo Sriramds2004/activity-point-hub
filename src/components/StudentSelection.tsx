@@ -10,14 +10,9 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
 
-interface Student {
-  usn: string;
-  first_name: string;
-  last_name: string;
-  dept: string;
-  year: number;
-}
+type Student = Database["public"]["Tables"]["students"]["Row"];
 
 export function StudentSelection() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -56,7 +51,7 @@ export function StudentSelection() {
         .eq("teacher_id", (await supabase.auth.getUser()).data.user?.id);
 
       if (error) throw error;
-      setAssignedStudents(counselingData.map(d => d.student_usn));
+      setAssignedStudents(counselingData.map(d => d.student_usn || ''));
     } catch (error) {
       console.error("Error fetching assigned students:", error);
     } finally {
