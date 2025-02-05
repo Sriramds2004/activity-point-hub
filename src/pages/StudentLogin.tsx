@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const StudentLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -24,13 +24,39 @@ const StudentLogin = () => {
     
     try {
       if (isSignUp) {
+        // First check if user already exists
+        const { data: existingUser, error: checkError } = await supabase
+          .from('students')
+          .select('email')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (existingUser) {
+          toast({
+            title: "Account Exists",
+            description: "An account with this email already exists. Please login instead.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         // Sign up new student
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          if (signUpError.message === "User already registered") {
+            toast({
+              title: "Account Exists",
+              description: "An account with this email already exists. Please login instead.",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw signUpError;
+        }
 
         if (authData.user) {
           // Create student record
@@ -62,7 +88,17 @@ const StudentLogin = () => {
           password,
         });
 
-        if (signInError) throw signInError;
+        if (signInError) {
+          if (signInError.message === "Invalid login credentials") {
+            toast({
+              title: "Login Failed",
+              description: "Invalid email or password. Please try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw signInError;
+        }
 
         toast({
           title: "Welcome back!",
