@@ -17,21 +17,31 @@ const CounselorDashboard = () => {
     try {
       console.log("Fetching counselor stats...");
       const user = await supabase.auth.getUser();
-      const teacherId = user.data.user?.id;
+      
+      // First get the teacher record
+      const { data: teacherData, error: teacherError } = await supabase
+        .from("teachers")
+        .select("teacher_id")
+        .eq("email", user.data.user?.email)
+        .single();
+        
+      if (teacherError) {
+        console.error("Teacher record not found:", teacherError);
+        return;
+      }
 
-      // First get assigned students
+      // Get assigned students
       const { data: counselingData } = await supabase
         .from('student_counseling')
         .select('student_usn')
-        .eq('teacher_id', teacherId);
+        .eq('teacher_id', teacherData.teacher_id);
 
       const studentUsns = counselingData?.map(record => record.student_usn) || [];
 
-      // Then get activities for these students
+      // Get all activities (not just assigned students' activities)
       const { data: activities, error } = await supabase
         .from("activities")
-        .select("*")
-        .in('student_usn', studentUsns);
+        .select("*");
 
       if (error) throw error;
 

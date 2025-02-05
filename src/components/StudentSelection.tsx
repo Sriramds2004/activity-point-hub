@@ -27,11 +27,13 @@ export function StudentSelection() {
 
   const fetchStudents = async () => {
     try {
+      console.log("Fetching students...");
       const { data: studentsData, error } = await supabase
         .from("students")
         .select("*");
 
       if (error) throw error;
+      console.log("Students fetched:", studentsData);
       setStudents(studentsData || []);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -45,15 +47,36 @@ export function StudentSelection() {
 
   const fetchAssignedStudents = async () => {
     try {
+      const user = await supabase.auth.getUser();
+      console.log("Current user:", user.data.user);
+      
+      // First verify if the teacher record exists
+      const { data: teacherData, error: teacherError } = await supabase
+        .from("teachers")
+        .select("teacher_id")
+        .eq("email", user.data.user?.email)
+        .single();
+        
+      if (teacherError) {
+        console.error("Teacher record not found:", teacherError);
+        throw new Error("Teacher record not found. Please contact support.");
+      }
+
       const { data: counselingData, error } = await supabase
         .from("student_counseling")
         .select("student_usn")
-        .eq("teacher_id", (await supabase.auth.getUser()).data.user?.id);
+        .eq("teacher_id", teacherData.teacher_id);
 
       if (error) throw error;
+      console.log("Assigned students fetched:", counselingData);
       setAssignedStudents(counselingData.map(d => d.student_usn || ''));
     } catch (error) {
       console.error("Error fetching assigned students:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -61,11 +84,26 @@ export function StudentSelection() {
 
   const assignStudent = async (usn: string) => {
     try {
+      const user = await supabase.auth.getUser();
+      
+      // Get teacher_id from teachers table
+      const { data: teacherData, error: teacherError } = await supabase
+        .from("teachers")
+        .select("teacher_id")
+        .eq("email", user.data.user?.email)
+        .single();
+        
+      if (teacherError) {
+        throw new Error("Teacher record not found. Please contact support.");
+      }
+
+      console.log("Assigning student with teacher_id:", teacherData.teacher_id);
+      
       const { error } = await supabase
         .from("student_counseling")
         .insert({
           student_usn: usn,
-          teacher_id: (await supabase.auth.getUser()).data.user?.id,
+          teacher_id: teacherData.teacher_id,
         });
 
       if (error) throw error;
@@ -80,7 +118,7 @@ export function StudentSelection() {
       console.error("Error assigning student:", error);
       toast({
         title: "Error",
-        description: "Failed to assign student",
+        description: error.message,
         variant: "destructive",
       });
     }
@@ -88,11 +126,24 @@ export function StudentSelection() {
 
   const unassignStudent = async (usn: string) => {
     try {
+      const user = await supabase.auth.getUser();
+      
+      // Get teacher_id from teachers table
+      const { data: teacherData, error: teacherError } = await supabase
+        .from("teachers")
+        .select("teacher_id")
+        .eq("email", user.data.user?.email)
+        .single();
+        
+      if (teacherError) {
+        throw new Error("Teacher record not found. Please contact support.");
+      }
+
       const { error } = await supabase
         .from("student_counseling")
         .delete()
         .eq("student_usn", usn)
-        .eq("teacher_id", (await supabase.auth.getUser()).data.user?.id);
+        .eq("teacher_id", teacherData.teacher_id);
 
       if (error) throw error;
 
