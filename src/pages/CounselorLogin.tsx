@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const CounselorLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -22,6 +22,7 @@ const CounselorLogin = () => {
     
     try {
       if (isSignUp) {
+        console.log("Starting signup process...");
         // Sign up new counselor
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -31,6 +32,7 @@ const CounselorLogin = () => {
         if (signUpError) throw signUpError;
 
         if (authData.user) {
+          console.log("User signed up, creating teacher record...");
           // Create teacher record
           const { error: teacherError } = await supabase
             .from('teachers')
@@ -44,7 +46,10 @@ const CounselorLogin = () => {
               }
             ]);
 
-          if (teacherError) throw teacherError;
+          if (teacherError) {
+            console.error("Error creating teacher record:", teacherError);
+            throw teacherError;
+          }
 
           toast({
             title: "Success!",
@@ -52,6 +57,7 @@ const CounselorLogin = () => {
           });
         }
       } else {
+        console.log("Attempting coordinator login...");
         // Sign in existing counselor
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -60,6 +66,7 @@ const CounselorLogin = () => {
 
         if (signInError) throw signInError;
 
+        console.log("Login successful!");
         toast({
           title: "Welcome back!",
           description: "Successfully logged in to your counselor account.",
