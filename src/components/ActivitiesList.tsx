@@ -9,7 +9,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 interface Activity {
@@ -30,8 +29,6 @@ interface ActivitiesListProps {
 export function ActivitiesList({ userRole }: ActivitiesListProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const fetchActivities = async () => {
     try {
@@ -42,36 +39,20 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
         const user = await supabase.auth.getUser();
         const teacherId = user.data.user?.id;
         
-        // First get the assigned student USNs
         const { data: counselingData } = await supabase
           .from('student_counseling')
           .select('student_usn')
           .eq('teacher_id', teacherId);
           
         const studentUsns = counselingData?.map(record => record.student_usn) || [];
-        
-        // Then filter activities by these USNs
         query = query.in('student_usn', studentUsns);
       }
       
-      const { data, error: fetchError } = await query.order("date", { ascending: false });
-
-      if (fetchError) {
-        console.error("Activities fetch error:", fetchError);
-        throw fetchError;
-      }
-
+      const { data } = await query.order("date", { ascending: false });
       console.log("Activities fetched:", data);
       setActivities(data || []);
-      setError(null);
     } catch (error) {
       console.error("Error in fetchActivities:", error);
-      setError(error.message);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -106,18 +87,13 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
       window.open(url, '_blank');
     } catch (error) {
       console.error("Download error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to download document",
-        variant: "destructive",
-      });
     }
   };
 
   const handleApprove = async (activityId: string) => {
     try {
       const user = await supabase.auth.getUser();
-      const { error } = await supabase
+      await supabase
         .from("activities")
         .update({ 
           approved_status: true,
@@ -125,30 +101,14 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
         })
         .eq("activity_id", activityId);
 
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Activity approved successfully",
-      });
-
       fetchActivities();
     } catch (error) {
       console.error("Approval error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to approve activity",
-        variant: "destructive",
-      });
     }
   };
 
   if (loading) {
     return <div>Loading activities...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
   }
 
   return (
@@ -178,7 +138,7 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
                 <TableCell>{activity.activity_name}</TableCell>
                 <TableCell>{format(new Date(activity.date), "PPP")}</TableCell>
                 <TableCell>{activity.points}</TableCell>
-                <TableCell>{format(new Date(activity.deadline), "PPP")}</TableCell>
+                <TableCell>{activity.deadline ? format(new Date(activity.deadline), "PPP") : "-"}</TableCell>
                 <TableCell>
                   {activity.approved_status ? "Approved" : "Pending"}
                 </TableCell>
