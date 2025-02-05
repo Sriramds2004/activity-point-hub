@@ -22,37 +22,54 @@ const CounselorLogin = () => {
     try {
       if (isSignUp) {
         console.log("Starting signup process...");
-        const { data: authData } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              role: 'counselor'
+            }
+          }
         });
 
-        if (authData.user) {
+        if (!signUpError && signUpData.user) {
           console.log("User signed up, creating teacher record...");
-          await supabase
+          const { error: teacherError } = await supabase
             .from('teachers')
             .insert([
               {
-                teacher_id: authData.user.id,
+                teacher_id: signUpData.user.id,
                 dept,
                 email,
                 first_name: firstName,
                 last_name: lastName,
               }
             ]);
-          
-          navigate("/counselor-dashboard");
+
+          if (!teacherError) {
+            console.log("Teacher record created successfully");
+            navigate("/counselor-dashboard");
+          }
         }
       } else {
         console.log("Attempting counselor login...");
-        const { data } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (data.user) {
-          console.log("Login successful!");
-          navigate("/counselor-dashboard");
+        if (!signInError && signInData.user) {
+          console.log("Login successful, checking teacher record...");
+          const { data: teacherData } = await supabase
+            .from('teachers')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+          if (teacherData) {
+            console.log("Teacher record found, navigating to dashboard");
+            navigate("/counselor-dashboard");
+          }
         }
       }
     } catch (error) {
