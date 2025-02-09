@@ -1,102 +1,21 @@
 
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-
-interface Activity {
-  activity_id: string;
-  activity_name: string;
-  date: string;
-  points: number;
-  deadline: string;
-  document_url: string | null;
-  approved_status: boolean;
-  student_usn: string | null;
-  students_can_download: boolean;
-}
+import { useActivities } from "@/hooks/useActivities";
+import { ActivitiesTableHeader } from "@/components/activities/ActivitiesTableHeader";
+import { ActivityRow } from "@/components/activities/ActivityRow";
 
 interface ActivitiesListProps {
   userRole: "student" | "counselor" | "club";
 }
 
 export function ActivitiesList({ userRole }: ActivitiesListProps) {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { activities, loading, fetchActivities } = useActivities(userRole);
   const { toast } = useToast();
-
-  const fetchActivities = async () => {
-    try {
-      console.log("Fetching activities...");
-      let query = supabase.from("activities").select("*");
-      
-      if (userRole === "counselor") {
-        const user = await supabase.auth.getUser();
-        const { data: teacherData } = await supabase
-          .from('teachers')
-          .select('teacher_id')
-          .eq('email', user.data.user?.email)
-          .maybeSingle();
-          
-        if (teacherData) {
-          const { data: counselingData } = await supabase
-            .from('student_counseling')
-            .select('student_usn');
-            
-          const studentUsns = counselingData?.map(record => record.student_usn) || [];
-          if (studentUsns.length > 0) {
-            query = query.in('student_usn', studentUsns);
-          }
-        }
-      }
-      
-      const { data } = await query.order("date", { ascending: false });
-      console.log("Activities fetched:", data);
-      setActivities(data || []);
-    } catch (error) {
-      console.error("Error in fetchActivities:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch activities",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchActivities();
-
-    const channel = supabase
-      .channel("activities-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "activities",
-        },
-        () => {
-          console.log("Activities changed, refreshing...");
-          fetchActivities();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userRole]);
 
   const handleDownload = async (url: string) => {
     try {
@@ -147,58 +66,23 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
   return (
     <div className="rounded-md border">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Activity Name</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Points</TableHead>
-            <TableHead>Deadline</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Document</TableHead>
-            {userRole === "counselor" && <TableHead>Actions</TableHead>}
-          </TableRow>
-        </TableHeader>
+        <ActivitiesTableHeader showActions={userRole === "counselor"} />
         <TableBody>
           {activities.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={userRole === "counselor" ? 7 : 6} className="text-center">
+            <tr>
+              <td colSpan={userRole === "counselor" ? 7 : 6} className="text-center py-4">
                 No activities found
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           ) : (
             activities.map((activity) => (
-              <TableRow key={activity.activity_id}>
-                <TableCell>{activity.activity_name}</TableCell>
-                <TableCell>{format(new Date(activity.date), "PPP")}</TableCell>
-                <TableCell>{activity.points}</TableCell>
-                <TableCell>{activity.deadline ? format(new Date(activity.deadline), "PPP") : "-"}</TableCell>
-                <TableCell>
-                  {activity.approved_status ? "Approved" : "Pending"}
-                </TableCell>
-                <TableCell>
-                  {activity.document_url && (activity.students_can_download || userRole !== "student") && (
-                    <Button
-                      variant="link"
-                      onClick={() => handleDownload(activity.document_url!)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Download
-                    </Button>
-                  )}
-                </TableCell>
-                {userRole === "counselor" && (
-                  <TableCell>
-                    {!activity.approved_status && (
-                      <Button
-                        variant="outline"
-                        onClick={() => handleApprove(activity.activity_id)}
-                      >
-                        Approve
-                      </Button>
-                    )}
-                  </TableCell>
-                )}
-              </TableRow>
+              <ActivityRow
+                key={activity.activity_id}
+                activity={activity}
+                userRole={userRole}
+                onDownload={handleDownload}
+                onApprove={handleApprove}
+              />
             ))
           )}
         </TableBody>
