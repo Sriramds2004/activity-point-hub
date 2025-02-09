@@ -36,12 +36,24 @@ export const useActivities = (userRole: "student" | "counselor" | "club") => {
         if (teacherData) {
           const { data: counselingData } = await supabase
             .from('student_counseling')
-            .select('student_usn');
+            .select('student_usn')
+            .eq('teacher_id', teacherData.teacher_id);
             
           const studentUsns = counselingData?.map(record => record.student_usn) || [];
           if (studentUsns.length > 0) {
             query = query.in('student_usn', studentUsns);
           }
+        }
+      } else if (userRole === "student") {
+        const user = await supabase.auth.getUser();
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('usn')
+          .eq('email', user.data.user?.email)
+          .single();
+          
+        if (studentData) {
+          query = query.eq('student_usn', studentData.usn);
         }
       }
       
