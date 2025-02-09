@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -27,13 +28,11 @@ export function StudentSelection() {
 
   const fetchStudents = async () => {
     try {
-      console.log("Fetching students...");
       const { data: studentsData, error } = await supabase
         .from("students")
         .select("*");
 
       if (error) throw error;
-      console.log("Students fetched:", studentsData);
       setStudents(studentsData || []);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -48,35 +47,26 @@ export function StudentSelection() {
   const fetchAssignedStudents = async () => {
     try {
       const user = await supabase.auth.getUser();
-      console.log("Current user:", user.data.user);
       
-      // First verify if the teacher record exists
-      const { data: teacherData, error: teacherError } = await supabase
+      const { data: teacherData } = await supabase
         .from("teachers")
         .select("teacher_id")
         .eq("email", user.data.user?.email)
-        .single();
+        .maybeSingle();
         
-      if (teacherError) {
-        console.error("Teacher record not found:", teacherError);
-        throw new Error("Teacher record not found. Please contact support.");
+      if (!teacherData) {
+        console.log("No teacher record found");
+        return;
       }
 
-      const { data: counselingData, error } = await supabase
+      const { data: counselingData } = await supabase
         .from("student_counseling")
         .select("student_usn")
         .eq("teacher_id", teacherData.teacher_id);
 
-      if (error) throw error;
-      console.log("Assigned students fetched:", counselingData);
-      setAssignedStudents(counselingData.map(d => d.student_usn || ''));
+      setAssignedStudents(counselingData?.map(d => d.student_usn || '') || []);
     } catch (error) {
       console.error("Error fetching assigned students:", error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -86,19 +76,21 @@ export function StudentSelection() {
     try {
       const user = await supabase.auth.getUser();
       
-      // Get teacher_id from teachers table
-      const { data: teacherData, error: teacherError } = await supabase
+      const { data: teacherData } = await supabase
         .from("teachers")
         .select("teacher_id")
         .eq("email", user.data.user?.email)
-        .single();
+        .maybeSingle();
         
-      if (teacherError) {
-        throw new Error("Teacher record not found. Please contact support.");
+      if (!teacherData) {
+        toast({
+          title: "Error",
+          description: "Teacher record not found",
+          variant: "destructive",
+        });
+        return;
       }
 
-      console.log("Assigning student with teacher_id:", teacherData.teacher_id);
-      
       const { error } = await supabase
         .from("student_counseling")
         .insert({
@@ -118,7 +110,7 @@ export function StudentSelection() {
       console.error("Error assigning student:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to assign student",
         variant: "destructive",
       });
     }
@@ -128,15 +120,19 @@ export function StudentSelection() {
     try {
       const user = await supabase.auth.getUser();
       
-      // Get teacher_id from teachers table
-      const { data: teacherData, error: teacherError } = await supabase
+      const { data: teacherData } = await supabase
         .from("teachers")
         .select("teacher_id")
         .eq("email", user.data.user?.email)
-        .single();
+        .maybeSingle();
         
-      if (teacherError) {
-        throw new Error("Teacher record not found. Please contact support.");
+      if (!teacherData) {
+        toast({
+          title: "Error",
+          description: "Teacher record not found",
+          variant: "destructive",
+        });
+        return;
       }
 
       const { error } = await supabase

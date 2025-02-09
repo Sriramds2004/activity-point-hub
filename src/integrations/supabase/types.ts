@@ -22,6 +22,7 @@ export type Database = {
           document_url: string | null
           points: number | null
           student_usn: string | null
+          students_can_download: boolean | null
         }
         Insert: {
           activity_id?: string
@@ -35,6 +36,7 @@ export type Database = {
           document_url?: string | null
           points?: number | null
           student_usn?: string | null
+          students_can_download?: boolean | null
         }
         Update: {
           activity_id?: string
@@ -48,16 +50,9 @@ export type Database = {
           document_url?: string | null
           points?: number | null
           student_usn?: string | null
+          students_can_download?: boolean | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "activities_approved_by_teacher_id_fkey"
-            columns: ["approved_by_teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["teacher_id"]
-          },
-        ]
+        Relationships: []
       }
       clubs: {
         Row: {
@@ -195,15 +190,7 @@ export type Database = {
           student_usn?: string | null
           teacher_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "student_counseling_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["teacher_id"]
-          },
-        ]
+        Relationships: []
       }
       students: {
         Row: {

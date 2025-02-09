@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface Activity {
   activity_id: string;
@@ -20,15 +22,17 @@ interface Activity {
   document_url: string | null;
   approved_status: boolean;
   student_usn: string | null;
+  students_can_download: boolean;
 }
 
 interface ActivitiesListProps {
-  userRole: "student" | "counselor";
+  userRole: "student" | "counselor" | "club";
 }
 
 export function ActivitiesList({ userRole }: ActivitiesListProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const fetchActivities = async () => {
     try {
@@ -37,15 +41,22 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
       
       if (userRole === "counselor") {
         const user = await supabase.auth.getUser();
-        const teacherId = user.data.user?.id;
-        
-        const { data: counselingData } = await supabase
-          .from('student_counseling')
-          .select('student_usn')
-          .eq('teacher_id', teacherId);
+        const { data: teacherData } = await supabase
+          .from('teachers')
+          .select('teacher_id')
+          .eq('email', user.data.user?.email)
+          .maybeSingle();
           
-        const studentUsns = counselingData?.map(record => record.student_usn) || [];
-        query = query.in('student_usn', studentUsns);
+        if (teacherData) {
+          const { data: counselingData } = await supabase
+            .from('student_counseling')
+            .select('student_usn');
+            
+          const studentUsns = counselingData?.map(record => record.student_usn) || [];
+          if (studentUsns.length > 0) {
+            query = query.in('student_usn', studentUsns);
+          }
+        }
       }
       
       const { data } = await query.order("date", { ascending: false });
@@ -53,6 +64,11 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
       setActivities(data || []);
     } catch (error) {
       console.error("Error in fetchActivities:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch activities",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -87,23 +103,40 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
       window.open(url, '_blank');
     } catch (error) {
       console.error("Download error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download file",
+        variant: "destructive",
+      });
     }
   };
 
   const handleApprove = async (activityId: string) => {
     try {
       const user = await supabase.auth.getUser();
-      await supabase
+      const { error } = await supabase
         .from("activities")
         .update({ 
           approved_status: true,
+          students_can_download: true,
           approved_by_teacher_id: user.data.user?.id
         })
         .eq("activity_id", activityId);
 
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Activity approved successfully",
+      });
       fetchActivities();
     } catch (error) {
       console.error("Approval error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve activity",
+        variant: "destructive",
+      });
     }
   };
 
@@ -143,7 +176,7 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
                   {activity.approved_status ? "Approved" : "Pending"}
                 </TableCell>
                 <TableCell>
-                  {activity.document_url && (
+                  {activity.document_url && (activity.students_can_download || userRole !== "student") && (
                     <Button
                       variant="link"
                       onClick={() => handleDownload(activity.document_url!)}
