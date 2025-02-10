@@ -7,9 +7,10 @@ import {
 
 interface ActivitiesTableHeaderProps {
   showActions: boolean;
+  userRole: "student" | "counselor" | "club";
 }
 
-export function ActivitiesTableHeader({ showActions }: ActivitiesTableHeaderProps) {
+export function ActivitiesTableHeader({ showActions, userRole }: ActivitiesTableHeaderProps) {
   return (
     <TableHeader>
       <TableRow>
@@ -17,7 +18,7 @@ export function ActivitiesTableHeader({ showActions }: ActivitiesTableHeaderProp
         <TableHead>Date</TableHead>
         <TableHead>Points</TableHead>
         <TableHead>Deadline</TableHead>
-        <TableHead>Status</TableHead>
+        {userRole === "student" && <TableHead>Status</TableHead>}
         <TableHead>Document</TableHead>
         {showActions && <TableHead>Actions</TableHead>}
       </TableRow>
