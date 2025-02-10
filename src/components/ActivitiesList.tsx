@@ -66,7 +66,10 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
   return (
     <div className="rounded-md border">
       <Table>
-        <ActivitiesTableHeader showActions={userRole === "counselor"} />
+        <ActivitiesTableHeader 
+          showActions={userRole === "counselor"} 
+          userRole={userRole}
+        />
         <TableBody>
           {activities.length === 0 ? (
             <tr>
