@@ -12,7 +12,7 @@ interface ActivityRowProps {
 }
 
 export function ActivityRow({ activity, userRole, onDownload, onApprove }: ActivityRowProps) {
-  const canDownload = userRole === "counselor" || (userRole === "student" && activity.approved_status);
+  const canDownload = userRole === "counselor" || (userRole === "student" && activity.students_can_download);
 
   return (
     <TableRow key={activity.activity_id}>
@@ -22,7 +22,11 @@ export function ActivityRow({ activity, userRole, onDownload, onApprove }: Activ
       <TableCell>{activity.deadline ? format(new Date(activity.deadline), "PPP") : "-"}</TableCell>
       {userRole === "student" && (
         <TableCell>
-          {activity.approved_status ? "Approved" : "Pending"}
+          <span className={`px-2 py-1 rounded-full text-sm ${
+            activity.approved_status ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {activity.approved_status ? "Approved" : "Pending"}
+          </span>
         </TableCell>
       )}
       <TableCell>
@@ -42,6 +46,7 @@ export function ActivityRow({ activity, userRole, onDownload, onApprove }: Activ
             <Button
               variant="outline"
               onClick={() => onApprove(activity.activity_id)}
+              className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
             >
               Approve
             </Button>
