@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const CounselorLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,6 +16,7 @@ const CounselorLogin = () => {
   const [lastName, setLastName] = useState("");
   const [dept, setDept] = useState("");
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +35,16 @@ const CounselorLogin = () => {
           }
         });
 
-        if (!signUpError && signUpData.user) {
+        if (signUpError) {
+          toast({
+            title: "Error",
+            description: signUpError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (signUpData.user) {
           console.log("User signed up, creating teacher record...");
           const { error: teacherError } = await supabase
             .from('teachers')
@@ -46,10 +58,20 @@ const CounselorLogin = () => {
               }
             ]);
 
-          if (!teacherError) {
-            console.log("Teacher record created successfully");
-            navigate("/counselor-dashboard");
+          if (teacherError) {
+            toast({
+              title: "Error",
+              description: "Failed to create counselor profile",
+              variant: "destructive",
+            });
+            return;
           }
+
+          toast({
+            title: "Success",
+            description: "Account created successfully",
+          });
+          navigate("/counselor-dashboard");
         }
       } else {
         console.log("Attempting counselor login...");
@@ -58,22 +80,55 @@ const CounselorLogin = () => {
           password,
         });
 
-        if (!signInError && signInData.user) {
+        if (signInError) {
+          toast({
+            title: "Error",
+            description: signInError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (signInData.user) {
           console.log("Login successful, checking teacher record...");
-          const { data: teacherData } = await supabase
+          const { data: teacherData, error: teacherError } = await supabase
             .from('teachers')
             .select('*')
             .eq('email', email)
-            .single();
+            .maybeSingle();
 
-          if (teacherData) {
-            console.log("Teacher record found, navigating to dashboard");
-            navigate("/counselor-dashboard");
+          if (teacherError) {
+            toast({
+              title: "Error",
+              description: "Failed to fetch counselor profile",
+              variant: "destructive",
+            });
+            return;
           }
+
+          if (!teacherData) {
+            toast({
+              title: "Error",
+              description: "No counselor account found. Please sign up first.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          toast({
+            title: "Success",
+            description: "Logged in successfully",
+          });
+          navigate("/counselor-dashboard");
         }
       }
     } catch (error) {
-      console.log('Auth process completed');
+      console.error('Auth process error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
   };
 
