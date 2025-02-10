@@ -37,7 +37,7 @@ const CounselorDashboard = () => {
         <TabsContent value="activities">
           <Card>
             <CardHeader>
-              <CardTitle>Student Activities</CardTitle>
+              <CardTitle>Assigned Students' Activities</CardTitle>
             </CardHeader>
             <CardContent>
               <ActivitiesList userRole="counselor" />

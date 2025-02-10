@@ -12,6 +12,8 @@ interface ActivityRowProps {
 }
 
 export function ActivityRow({ activity, userRole, onDownload, onApprove }: ActivityRowProps) {
+  const canDownload = userRole === "counselor" || (userRole === "student" && activity.approved_status);
+
   return (
     <TableRow key={activity.activity_id}>
       <TableCell>{activity.activity_name}</TableCell>
@@ -24,7 +26,7 @@ export function ActivityRow({ activity, userRole, onDownload, onApprove }: Activ
         </TableCell>
       )}
       <TableCell>
-        {activity.document_url && (activity.students_can_download || userRole !== "student") && (
+        {activity.document_url && canDownload && (
           <Button
             variant="link"
             onClick={() => onDownload(activity.document_url!)}
