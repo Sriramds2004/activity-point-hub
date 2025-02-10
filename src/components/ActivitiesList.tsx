@@ -33,12 +33,27 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
   const handleApprove = async (activityId: string) => {
     try {
       const user = await supabase.auth.getUser();
+      const { data: teacherData } = await supabase
+        .from("teachers")
+        .select("teacher_id")
+        .eq("email", user.data.user?.email)
+        .maybeSingle();
+
+      if (!teacherData) {
+        toast({
+          title: "Error",
+          description: "Teacher record not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("activities")
         .update({ 
           approved_status: true,
           students_can_download: true,
-          approved_by_teacher_id: user.data.user?.id
+          approved_by_teacher_id: teacherData.teacher_id
         })
         .eq("activity_id", activityId);
 

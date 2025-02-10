@@ -18,7 +18,10 @@ export function StudentSelection() {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Assign students to manage their activities and approve their participation.
+      </p>
       <Table>
         <StudentTableHeader />
         <TableBody>

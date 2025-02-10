@@ -20,7 +20,7 @@ export function ActivitiesTableHeader({ showActions, userRole }: ActivitiesTable
         <TableHead>Deadline</TableHead>
         {userRole === "student" && <TableHead>Status</TableHead>}
         <TableHead>Document</TableHead>
-        {showActions && <TableHead>Actions</TableHead>}
+        {userRole === "counselor" && showActions && <TableHead>Actions</TableHead>}
       </TableRow>
     </TableHeader>
   );
