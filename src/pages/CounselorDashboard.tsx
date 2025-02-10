@@ -19,21 +19,11 @@ const CounselorDashboard = () => {
         approvedActivities={stats.approvedActivities}
       />
 
-      <Tabs defaultValue="activities">
+      <Tabs defaultValue="students">
         <TabsList>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
           <TabsTrigger value="students">Manage Students</TabsTrigger>
+          <TabsTrigger value="activities">Student Activities</TabsTrigger>
         </TabsList>
-        <TabsContent value="activities">
-          <Card>
-            <CardHeader>
-              <CardTitle>Activities to Approve</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ActivitiesList userRole="counselor" />
-            </CardContent>
-          </Card>
-        </TabsContent>
         <TabsContent value="students">
           <Card>
             <CardHeader>
@@ -41,6 +31,16 @@ const CounselorDashboard = () => {
             </CardHeader>
             <CardContent>
               <StudentSelection />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="activities">
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Activities</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ActivitiesList userRole="counselor" />
             </CardContent>
           </Card>
         </TabsContent>

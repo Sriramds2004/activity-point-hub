@@ -18,9 +18,11 @@ export function ActivityRow({ activity, userRole, onDownload, onApprove }: Activ
       <TableCell>{format(new Date(activity.date), "PPP")}</TableCell>
       <TableCell>{activity.points}</TableCell>
       <TableCell>{activity.deadline ? format(new Date(activity.deadline), "PPP") : "-"}</TableCell>
-      <TableCell>
-        {activity.approved_status ? "Approved" : "Pending"}
-      </TableCell>
+      {userRole === "student" && (
+        <TableCell>
+          {activity.approved_status ? "Approved" : "Pending"}
+        </TableCell>
+      )}
       <TableCell>
         {activity.document_url && (activity.students_can_download || userRole !== "student") && (
           <Button

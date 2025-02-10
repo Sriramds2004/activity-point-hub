@@ -73,7 +73,7 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
         <TableBody>
           {activities.length === 0 ? (
             <tr>
-              <td colSpan={userRole === "counselor" ? 7 : 6} className="text-center py-4">
+              <td colSpan={7} className="text-center py-4">
                 No activities found
               </td>
             </tr>
