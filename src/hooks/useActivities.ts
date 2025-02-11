@@ -45,7 +45,7 @@ export const useActivities = (
         }
       } else if (userRole === "counselor" && studentUsn) {
         console.log("Fetching activities for specific student:", studentUsn);
-        query = query.or(`student_usn.eq.${studentUsn},and(approved_status.eq.true,student_usn.is.null)`);
+        query = query.or(`student_usn.eq.${studentUsn},student_usn.is.null`);
       }
       
       const { data, error } = await query;
