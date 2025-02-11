@@ -15,7 +15,10 @@ export interface Activity {
   students_can_download: boolean;
 }
 
-export const useActivities = (userRole: "student" | "counselor" | "club") => {
+export const useActivities = (
+  userRole: "student" | "counselor" | "club",
+  studentUsn?: string
+) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -38,18 +41,11 @@ export const useActivities = (userRole: "student" | "counselor" | "club") => {
           
         if (studentData) {
           console.log("Fetching activities for student:", studentData.usn);
-          // Fetch both student-specific activities AND approved activities with no student assigned
-          const { data, error } = await supabase
-            .from("activities")
-            .select("*")
-            .or(`student_usn.eq.${studentData.usn},and(approved_status.eq.true,student_usn.is.null)`)
-            .order("date", { ascending: false });
-            
-          if (error) throw error;
-          console.log("Activities fetched:", data);
-          setActivities(data || []);
-          return;
+          query = query.or(`student_usn.eq.${studentData.usn},and(approved_status.eq.true,student_usn.is.null)`);
         }
+      } else if (userRole === "counselor" && studentUsn) {
+        console.log("Fetching activities for specific student:", studentUsn);
+        query = query.or(`student_usn.eq.${studentUsn},and(approved_status.eq.true,student_usn.is.null)`);
       }
       
       const { data, error } = await query;
@@ -94,7 +90,7 @@ export const useActivities = (userRole: "student" | "counselor" | "club") => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userRole]);
+  }, [userRole, studentUsn]);
 
   return { activities, loading, fetchActivities };
 };

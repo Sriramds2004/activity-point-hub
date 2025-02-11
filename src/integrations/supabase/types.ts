@@ -276,6 +276,13 @@ export type Database = {
       }
     }
     Views: {
+      student_activity_points: {
+        Row: {
+          student_usn: string | null
+          total_points: number | null
+        }
+        Relationships: []
+      }
       student_total_points: {
         Row: {
           first_name: string | null
