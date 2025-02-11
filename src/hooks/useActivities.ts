@@ -23,28 +23,12 @@ export const useActivities = (userRole: "student" | "counselor" | "club") => {
   const fetchActivities = async () => {
     try {
       console.log("Fetching activities...");
-      let query = supabase.from("activities").select("*");
+      let query = supabase
+        .from("activities")
+        .select("*")
+        .order("date", { ascending: false });
       
-      if (userRole === "counselor") {
-        const user = await supabase.auth.getUser();
-        const { data: teacherData } = await supabase
-          .from('teachers')
-          .select('teacher_id')
-          .eq('email', user.data.user?.email)
-          .maybeSingle();
-          
-        if (teacherData) {
-          const { data: counselingData } = await supabase
-            .from('student_counseling')
-            .select('student_usn')
-            .eq('teacher_id', teacherData.teacher_id);
-            
-          const studentUsns = counselingData?.map(record => record.student_usn) || [];
-          if (studentUsns.length > 0) {
-            query = query.in('student_usn', studentUsns);
-          }
-        }
-      } else if (userRole === "student") {
+      if (userRole === "student") {
         const user = await supabase.auth.getUser();
         const { data: studentData } = await supabase
           .from('students')
@@ -53,11 +37,17 @@ export const useActivities = (userRole: "student" | "counselor" | "club") => {
           .single();
           
         if (studentData) {
+          console.log("Fetching activities for student:", studentData.usn);
           query = query.eq('student_usn', studentData.usn);
         }
       }
       
-      const { data } = await query.order("date", { ascending: false });
+      const { data, error } = await query;
+      
+      if (error) {
+        throw error;
+      }
+
       console.log("Activities fetched:", data);
       setActivities(data || []);
     } catch (error) {
