@@ -15,13 +15,13 @@ const StudentDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const { data: user } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
       // Get student USN
       const { data: studentData } = await supabase
         .from('students')
         .select('usn')
-        .eq('email', user.data.user?.email)
+        .eq('email', user?.email)
         .maybeSingle();
 
       if (!studentData) return;

@@ -11,10 +11,11 @@ import { ActivityRow } from "@/components/activities/ActivityRow";
 
 interface ActivitiesListProps {
   userRole: "student" | "counselor" | "club";
+  studentUsn?: string;
 }
 
-export function ActivitiesList({ userRole }: ActivitiesListProps) {
-  const { activities, loading, fetchActivities } = useActivities(userRole);
+export function ActivitiesList({ userRole, studentUsn }: ActivitiesListProps) {
+  const { activities, loading, fetchActivities } = useActivities(userRole, studentUsn);
   const { toast } = useToast();
 
   const handleDownload = async (url: string) => {
@@ -32,11 +33,11 @@ export function ActivitiesList({ userRole }: ActivitiesListProps) {
 
   const handleApprove = async (activityId: string) => {
     try {
-      const user = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       const { data: teacherData } = await supabase
         .from("teachers")
         .select("teacher_id")
-        .eq("email", user.data.user?.email)
+        .eq("email", user?.email)
         .maybeSingle();
 
       if (!teacherData) {
