@@ -34,11 +34,21 @@ export const useActivities = (userRole: "student" | "counselor" | "club") => {
           .from('students')
           .select('usn')
           .eq('email', user.data.user?.email)
-          .single();
+          .maybeSingle();
           
         if (studentData) {
           console.log("Fetching activities for student:", studentData.usn);
-          query = query.eq('student_usn', studentData.usn);
+          // Fetch both student-specific activities AND approved activities with no student assigned
+          const { data, error } = await supabase
+            .from("activities")
+            .select("*")
+            .or(`student_usn.eq.${studentData.usn},and(approved_status.eq.true,student_usn.is.null)`)
+            .order("date", { ascending: false });
+            
+          if (error) throw error;
+          console.log("Activities fetched:", data);
+          setActivities(data || []);
+          return;
         }
       }
       
