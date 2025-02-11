@@ -32,12 +32,10 @@ const StudentDashboard = () => {
         .select("*")
         .or(`student_usn.eq.${studentData.usn},and(approved_status.eq.true,student_usn.is.null)`);
 
-      // Get total points
-      const { data: pointsData } = await supabase
-        .from('student_activity_points')
-        .select('total_points')
-        .eq('student_usn', studentData.usn)
-        .maybeSingle();
+      // Calculate total points from approved activities
+      const totalPoints = activities
+        ?.filter(activity => activity.approved_status)
+        .reduce((sum, activity) => sum + (activity.points || 0), 0) || 0;
 
       const total = activities?.length || 0;
       const pending = activities?.filter(a => !a.approved_status).length || 0;
@@ -47,7 +45,7 @@ const StudentDashboard = () => {
         totalActivities: total,
         pendingActivities: pending,
         approvedActivities: approved,
-        totalPoints: pointsData?.total_points || 0,
+        totalPoints: totalPoints,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
