@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,19 +25,34 @@ const StudentLogin = () => {
     
     try {
       if (isSignUp) {
-        // First check if user already exists
-        const { data: existingUser, error: checkError } = await supabase
-          .from('students')
-          .select('email')
-          .eq('email', email)
-          .maybeSingle();
+        // First check if email exists in auth
+        const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
+        const emailExists = users?.some(user => user.email === email);
 
-        if (existingUser) {
+        if (emailExists) {
           toast({
             title: "Account Exists",
             description: "An account with this email already exists. Please login instead.",
             variant: "destructive",
           });
+          setIsSignUp(false);
+          return;
+        }
+
+        // Then check if student record exists
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('email')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (existingStudent) {
+          toast({
+            title: "Account Exists",
+            description: "A student with this email already exists. Please login instead.",
+            variant: "destructive",
+          });
+          setIsSignUp(false);
           return;
         }
 
@@ -44,19 +60,14 @@ const StudentLogin = () => {
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              role: 'student'
+            }
+          }
         });
 
-        if (signUpError) {
-          if (signUpError.message === "User already registered") {
-            toast({
-              title: "Account Exists",
-              description: "An account with this email already exists. Please login instead.",
-              variant: "destructive",
-            });
-            return;
-          }
-          throw signUpError;
-        }
+        if (signUpError) throw signUpError;
 
         if (authData.user) {
           // Create student record
