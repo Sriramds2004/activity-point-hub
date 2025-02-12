@@ -13,6 +13,18 @@ interface SignupFormProps {
 export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
   const { toast } = useToast();
   
+  const validateEmail = (email: string) => {
+    if (!email.endsWith('@rvce.edu.in')) {
+      throw new Error('Email must be a valid RVCE email address (@rvce.edu.in)');
+    }
+  };
+
+  const validateUSN = (usn: string) => {
+    if (!usn.toLowerCase().startsWith('1rv22')) {
+      throw new Error('USN must start with "1RV22"');
+    }
+  };
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -25,6 +37,10 @@ export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
     const year = formData.get('year') as string;
 
     try {
+      // Validate email and USN format
+      validateEmail(email);
+      validateUSN(usn);
+
       // Check if email exists in students table first
       const { data: existingStudent } = await supabase
         .from('students')
@@ -91,12 +107,14 @@ export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email (@rvce.edu.in)</Label>
         <Input
           id="email"
           name="email"
           type="email"
-          placeholder="Enter your email"
+          placeholder="Enter your RVCE email"
+          pattern=".*@rvce\.edu\.in$"
+          title="Must be a valid RVCE email address"
           required
         />
       </div>
@@ -131,12 +149,14 @@ export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="usn">USN</Label>
+        <Label htmlFor="usn">USN (starts with 1RV22)</Label>
         <Input
           id="usn"
           name="usn"
           type="text"
           placeholder="Enter your USN"
+          pattern="1RV22.*"
+          title="USN must start with 1RV22"
           required
         />
       </div>
