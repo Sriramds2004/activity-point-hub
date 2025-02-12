@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { User } from '@supabase/supabase-js';
 
 interface SignupFormProps {
   onToggleMode: () => void;
@@ -24,21 +25,7 @@ export const SignupForm = ({ onToggleMode }: SignupFormProps) => {
     const year = formData.get('year') as string;
 
     try {
-      // Check if user exists in auth
-      const { data: { users } } = await supabase.auth.admin.listUsers();
-      const emailExists = users?.some(user => user.email === email);
-
-      if (emailExists) {
-        toast({
-          title: "Account Exists",
-          description: "An account with this email already exists. Please login instead.",
-          variant: "destructive",
-        });
-        onToggleMode();
-        return;
-      }
-
-      // Check if student record exists
+      // Check if email exists in students table first
       const { data: existingStudent } = await supabase
         .from('students')
         .select('email')
