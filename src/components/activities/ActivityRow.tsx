@@ -42,7 +42,7 @@ export function ActivityRow({ activity, userRole, onDownload, onApprove }: Activ
       </TableCell>
       {userRole === "counselor" && (
         <TableCell>
-          {!activity.approved_status && activity.student_usn && (
+          {!activity.approved_status && (
             <Button
               variant="outline"
               onClick={() => onApprove(activity.activity_id)}
